@@ -203,6 +203,13 @@ dogfood-verify = [
   "reset",
 ]
 restart = "docker compose --profile observability --profile localstack restart api worker"
+# Compose's `up` (what `poe start` runs) only recreates a container when the
+# container's own configuration changes (image, environment, build args, and
+# so on); it does not track bind-mounted file content, so editing
+# `infra/observability/alerts.yml` and running `poe start` again never makes
+# Prometheus re-read it. This restarts just the Prometheus container so it
+# reloads its rule file.
+reload-alerts = "docker compose --profile observability --profile localstack restart prometheus"
 reset = "docker compose --profile observability --profile localstack down --volumes --remove-orphans"
 stop = "docker compose --profile observability --profile localstack down --remove-orphans"
 load-test = "locust -f loadtest/locustfile.py --headless --users 2 --spawn-rate 2 --run-time 30s --host http://localhost:${COLDLINE_API_HOST_PORT:-8000}"

@@ -47,6 +47,14 @@ is allowed to fire never fires during the exercise — even though the dead-lett
 backed up the whole time. Lower `for` to a value that actually fires within the exercise window
 while staying inside the published bound.
 
+Then reload Prometheus: editing `alerts.yml` only changes the file on disk. Docker Compose's `up`
+(what `poe start` runs) only recreates a container when the container's own configuration changes
+— its image, environment, build args, and so on — it does not track a bind-mounted file's content,
+so running `poe start` again does **not** make Prometheus re-read `alerts.yml`; the deployed rule
+silently keeps evaluating the *old* `for` value, which is confusing precisely because the file on
+disk looks right. Run `poe reload-alerts` instead — it restarts just the Prometheus container, which
+does make it re-read the file — then run `poe slo-contract` until it passes.
+
 ## The two exercises
 
 Run these against the live stack, in order, after `poe start`:
