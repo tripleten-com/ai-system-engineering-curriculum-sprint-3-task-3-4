@@ -64,6 +64,7 @@ poe verify
 | `poe contract` | Check interfaces, boundaries, submissions, and repository structure |
 | `poe smoke` | Check the initialized running platform |
 | `poe e2e` | Run the external API-to-worker workflow |
+| `poe reload-alerts` | Restart the Prometheus container so it re-reads an edited `infra/observability/alerts.yml` |
 | `poe worker-stop` | Stop the worker before forcing a message to the dead-letter queue |
 | `poe trigger-alert-load` | Force one exception to the dead-letter queue, restart the worker, and wait for the alert to fire |
 | `poe verify-alert-recovery` | Redrive the dead-lettered message and wait for the exception and the alert to recover |
@@ -199,7 +200,8 @@ compare them. Everything else in this repository is supplied, including Task 3.3
 
 See **Task 4: SLO and alert** in your course platform for the full walkthrough. In outline: read
 `docs/student/task-3-4-contract.md` and `src/worker/queue_monitor.py`'s docstrings, lower `for` in
-`infra/observability/alerts.yml`, run `poe start` and `poe slo-contract` until it passes, run the
+`infra/observability/alerts.yml`, run `poe reload-alerts` (a plain `poe start` again will not pick
+up the edited file — see the Task contract) and `poe slo-contract` until it passes, run the
 two failure exercises (`poe worker-stop`, `poe trigger-alert-load`, `poe verify-alert-recovery`)
 against the live stack and confirm the alert fires and then resolves, run `poe verify`, and open
 your pull request.

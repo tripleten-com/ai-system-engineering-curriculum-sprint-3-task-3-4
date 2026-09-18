@@ -14,12 +14,13 @@ Tools:             Python 3.12, boto3, httpx, Docker Compose
 import json
 import subprocess
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
 import httpx
 
-from tests.failure.force_dlq_arrival import DEAD_LETTER_NAME, QUEUE_NAME, READING
+from tests.failure.force_dlq_arrival import DEAD_LETTER_NAME, QUEUE_NAME
 from tests.failure.queue_client import client, queue_url
 from tests.runtime_config import host_port
 
@@ -30,6 +31,34 @@ ALERT_NAME = "ColdlineDeadLetterQueueBacklog"
 # within it. See docs/student/task-3-4-contract.md for the published bound.
 ACTIVE_WAIT_SECONDS = 45.0
 POLL_INTERVAL_SECONDS = 2.0
+
+
+def _build_reading() -> dict[str, Any]:
+    """Build one exercise reading with a fresh identity per run.
+
+    A fresh identity on every call keeps the automated slo-contract check and
+    a student's own manual run from ever colliding on
+    ReadingApplication's idempotent replay of the same reading_id.
+
+    The API derives the exception identity as a deterministic hash of
+    `reading_id` alone (`src/domain/exceptions.py::exception_id_for`), and
+    `ReadingApplication.accept` intentionally returns the existing record
+    without republishing once that identity is no longer `RECEIVED`
+    (`src/api/use_cases.py`) — correct idempotent-replay behavior. Reusing a
+    fixed identity here would make `poe slo-contract` (which runs this exact
+    script internally) and any later manual `poe trigger-alert-load` collide
+    on that same identity instead of each forcing a genuinely new exception.
+    """
+    token = uuid.uuid4().hex[:12]
+    return {
+        "reading_id": f"reading-alert-exercise-{token}",
+        "shipment_id": f"shipment-alert-exercise-{token}",
+        "temperature_c": 11.4,
+        "allowed_min_c": 2.0,
+        "allowed_max_c": 8.0,
+        "recorded_at": "2026-01-01T00:00:00Z",
+        "context": "Sprint 3 Task 3.4 SLO/alert exercise",
+    }
 
 
 def main() -> int:
@@ -48,7 +77,7 @@ def main() -> int:
     """
     api_port = host_port("COLDLINE_API_HOST_PORT", 8000)
     with httpx.Client(base_url=f"http://localhost:{api_port}", timeout=5.0) as api:
-        accepted = api.post("/api/v1/readings", json=READING)
+        accepted = api.post("/api/v1/readings", json=_build_reading())
         accepted.raise_for_status()
         exception_id = accepted.json()["exception_id"]
 
