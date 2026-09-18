@@ -1,0 +1,27 @@
+# Coldline - Task 3.4
+# File: infra/observability/alerts.yml
+# Component: Prometheus alerting rule
+# Purpose: Define the one required user-impact SLO alert.
+# Interacts With: Prometheus, Alertmanager
+# Sprint/Task: Sprint 3 - Project 3 / Task 3.4
+# Concepts: SLO/alert, dead-letter redrive
+
+# Task 3.4 — Configure the one alert's actionable window
+# `for` must be a duration between 5s and 120s (see
+# docs/student/task-3-4-contract.md). 90s is inside that published bound, so
+# Prometheus accepts it and the stack starts fine — but it is still the wrong
+# choice: this exercise's forced failure and redrive complete in well under a
+# minute, so an alert that needs 90 continuous seconds of backlog before firing
+# never fires during the exercise, even though the dead-letter queue really is
+# backed up the whole time. Lower `for` to a value that actually fires within
+# the exercise window while staying inside the published bound.
+groups:
+  - name: coldline-recovery
+    rules:
+      - alert: ColdlineDeadLetterQueueBacklog
+        expr: coldline_job_queue_dead_letter_depth > 0
+        for: 90s
+        labels:
+          severity: page
+        annotations:
+          summary: "A shipment exception has sat dead-lettered without recovery."
