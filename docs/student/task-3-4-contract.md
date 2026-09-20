@@ -47,6 +47,14 @@ is allowed to fire never fires during the exercise — even though the dead-lett
 backed up the whole time. Lower `for` to a value that actually fires within the exercise window
 while staying inside the published bound.
 
+How long is that window? The published bound is what Prometheus will accept; it is wider than what
+this exercise can observe. `poe trigger-alert-load` — the same script the automated check runs —
+waits at most **45 seconds** for the alert to reach `active` before giving up, and Alertmanager
+adds a `group_wait` of **5 seconds** on top of the rule's own `for` before the alert is grouped and
+visible. So a legal `for` near the top of `[5s, 120s]` simply cannot reach `active` inside the
+check, and you would see a timeout rather than a rule error. Choose a value that can fire inside
+that 45-second window.
+
 Then reload Prometheus: editing `alerts.yml` only changes the file on disk. Docker Compose's `up`
 (what `poe start` runs) only recreates a container when the container's own configuration changes
 — its image, environment, build args, and so on — it does not track a bind-mounted file's content,
@@ -80,7 +88,7 @@ poe verify         # the full public student verification path
 
 | Check | What it looks at |
 |---|---|
-| `test_alert_threshold_is_actionable_and_recovers` | The deployed rule's `for` is inside `[5s, 120s]`; forcing one exception to the dead-letter queue makes the alert reach `active` inside a bounded wait; redriving it makes the exception reach `COMPLETED` and the alert resolve |
+| `test_alert_threshold_is_actionable_and_recovers` | The deployed rule's `for` is inside `[5s, 120s]`; forcing one exception to the dead-letter queue makes the alert reach `active` inside a bounded wait — at most 45 seconds, with Alertmanager's 5-second `group_wait` inside it, so pick a `for` that can fire in that window; redriving it makes the exception reach `COMPLETED` and the alert report `resolved` or absent |
 
 ## Student-editable paths
 
