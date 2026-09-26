@@ -6,21 +6,16 @@
 # Sprint/Task: Sprint 3 - Project 3 / Task 3.4
 # Concepts: SLO/alert, dead-letter redrive
 
-# Task 3.4 — Configure the one alert's actionable window
-# `for` must be a duration between 5s and 120s (see
-# docs/student/task-3-4-contract.md). 90s is inside that published bound, so
-# Prometheus accepts it and the stack starts fine — but it is still the wrong
-# choice: this exercise's forced failure and redrive complete in well under a
-# minute, so an alert that needs 90 continuous seconds of backlog before firing
-# never fires during the exercise, even though the dead-letter queue really is
-# backed up the whole time. Lower `for` to a value that actually fires within
-# the exercise window while staying inside the published bound.
+# Known-wrong variant: 110s is inside the published Prometheus-parseable
+# [5s, 120s] bound, so the rule loads fine, but it is still far too long to
+# fire inside this exercise's forced-failure window — the exact defect
+# tests/contract/test_slo_alert.py's bounded-wait firing check catches.
 groups:
   - name: coldline-recovery
     rules:
       - alert: ColdlineDeadLetterQueueBacklog
         expr: coldline_job_queue_dead_letter_depth > 0
-        for: 15s
+        for: 110s
         labels:
           severity: page
         annotations:
