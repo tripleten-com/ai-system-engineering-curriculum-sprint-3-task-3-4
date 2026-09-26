@@ -20,7 +20,7 @@ groups:
     rules:
       - alert: ColdlineDeadLetterQueueBacklog
         expr: coldline_job_queue_dead_letter_depth > 0
-        for: 90s
+        for: 15s
         labels:
           severity: page
         annotations:
