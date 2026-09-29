@@ -67,9 +67,9 @@ poe verify
 | `poe reload-alerts` | Restart the Prometheus container so it re-reads an edited `infra/observability/alerts.yml` |
 | `poe worker-stop` | Stop the worker before forcing a message to the dead-letter queue |
 | `poe trigger-alert-load` | Force one exception to the dead-letter queue, restart the worker, and wait for the alert to fire |
-| `poe verify-alert-recovery` | Redrive the dead-lettered message and wait for the exception and the alert to recover |
+| `poe verify-alert-recovery` | Redrive every dead-lettered message and wait for the exception and the alert to recover |
 | `poe verify` | Run the public student verification path |
-| `poe student-tests` | Run your own tests under `tests/student/` |
+| `poe student-tests` | Run the supplied tests under `tests/student/`; this Task permits no additions there |
 | `poe restart` | Restart the existing API and worker containers **without rebuilding** |
 | `poe stop` | Remove containers and the network, keeping named volumes |
 | `poe reset` | Remove containers, the network, and local named volumes |
@@ -113,7 +113,7 @@ repository root/
     ├── diagnostics/     Supplied stage inspector
     ├── doubles/         Supplied deterministic test doubles
     ├── failure/         Supplied failure-exercise scripts — run them, do not edit them
-    ├── student/         Your own tests
+    ├── student/         Supplied student tests; no additions in this Task
     ├── smoke/           Running-platform checks
     └── e2e/             Supplied workflow tools and checks
 ```
