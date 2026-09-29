@@ -74,12 +74,20 @@ Run these against the live stack, in order, after `poe start`:
 ```shell
 poe worker-stop           # trigger-alert-load forces one exception to the dead-letter queue
 poe trigger-alert-load    # forces the failure, restarts the worker, and waits for the alert to fire
-poe verify-alert-recovery # redrives the message and waits for the exception and the alert to recover
+poe verify-alert-recovery # redrives every dead-lettered message and waits for the exception and the alert to recover
 ```
 
 `poe trigger-alert-load` prints the exception id, the dead-letter queue depth, and the alert's
 state, which must reach `active`. `poe verify-alert-recovery` prints the same exception id's final
 state, which must be `COMPLETED`, and the alert's final state, which must be `resolved` or absent.
+
+A failed attempt leaves its message in the dead-letter queue, and the alert watches the queue's
+whole depth. `poe verify-alert-recovery` therefore redrives every dead-lettered message, not only
+the one `poe trigger-alert-load` just forced: it reports the most recently sent one as
+`exception_id` and lists any older ones under `also_redriven`. A `dead_letter_queue_depth` above
+`1` in the trigger output means an earlier attempt left a message behind. If the alert has not
+cleared when the 45-second wait runs out, the script reports the state it last saw, such as
+`active`, and fails; `absent` means Alertmanager no longer lists the alert.
 
 ## Commands
 
